@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE project []>
+
+<project name="goofferz" default="usage" basedir=".">
+
+	<!-- ========== Initialize Properties =================================== -->
+	<property environment="env" />
+	<property name="project.home" value="${basedir}" />
+	<property name="project.build.dest" value="${project.home}/build" />
+	<property name="project.src" value="${project.home}/src" />
+	<property name="project.framework" value="${project.home}/framework" />
+	<property name="project.doc" value="${project.home}/doc" />
+	<property name="project.lib" value="${project.home}/lib" />
+	<property name="project.resources" value="${project.home}/resources" />
+	<property name="project.scripts" value="${project.home}/scripts" />
+	<property name="project.target" value="${project.home}/target" />
+	<property name="project.ui_resources" value="${project.home}/ui_resources" />
+	<property name="jar.dir" value="${project.build.dest}/jar" />
+	<property name="main-class" value="com.goofferz.Application" />
+
+	<target name="setClassPath" unless="project.classpath">
+		<path id="classpath_jars">
+			<fileset dir="${project.lib}">
+				<include name="*.jar" />
+			</fileset>
+		</path>
+		<pathconvert pathsep=";" property="project.classpath"
+			refid="classpath_jars" />
+	</target>
+
+	<target name="init" depends="setClassPath">
+		<tstamp>
+			<format property="start.time" pattern="MM/dd/yyyy hh:mm aa" />
+		</tstamp>
+		<condition property="ANT" value="${env.ANT_HOME}/bin/ant.bat"
+			else="${env.ANT_HOME}/bin/ant">
+			<os family="windows" />
+		</condition>
+	</target>
+
+	<!-- clean -->
+	<target name="clean">
+		<delete dir="${project.build.dest}" />
+		<delete dir="${project.home}/bin" />
+		<delete dir="${project.doc}" />
+		<delete dir="${project.lib}" />
+		<delete dir="${project.target}" />
+	</target>
+
+	<!-- compile -->
+	<target name="compile" depends="init"
+		description="Compiles source code, and copies it onto the build class path.">
+		<delete includeemptydirs="true" quiet="true">
+			<fileset dir="${project.build.dest}" includes="**/*" />
+		</delete>
+		<echo message="making directory..." />
+		<mkdir dir="${project.build.dest}" />
+		<echo message="classpath------: ${project.classpath}" />
+		<echo message="${project.classpath}" />
+		<echo message="compiling..." />
+		<javac debug="true" destdir="${project.build.dest}" srcdir="${project.src}"
+			classpath="${project.classpath}">
+		</javac>
+	</target>
+
+	<!-- jar -->
+	<target name="jar" depends="compile">
+		<mkdir dir="${jar.dir}" />
+		<mkdir dir="${project.build.dest}/lib" />
+		<copy todir="${project.build.dest}/lib" flatten="true">
+			<path refid="classpath_jars" />
+		</copy>
+
+		<manifestclasspath property="manifest.classpath"
+			jarfile="${jar.dir}/goofferz.jar">
+			<classpath refid="classpath_jars" />
+		</manifestclasspath>
+
+		<jar destfile="${jar.dir}/goofferz.jar" basedir="${project.build.dest}">
+			<manifest>
+				<attribute name="Main-Class" value="${main-class}" />
+				<attribute name="Class-Path" value="${manifest.classpath}" />
+			</manifest>
+			<fileset dir="${project.resources}">
+				<include name="*.properties" />
+			</fileset>
+		</jar>
+	</target>
+
+	<!-- run -->
+	<target name="run" depends="jar">
+		<java jar="${jar.dir}/goofferz.jar" fork="true">
+			<classpath refid="classpath_jars">
+			</classpath>
+		</java>
+	</target>
+
+
+	<!-- usage -->
+	<target name="usage">
+		<echo>
+			"ant run" will build and execute the application
+		</echo>
+	</target>
+
+	<!-- ****************** targets not used ****************** -->
+</project>
